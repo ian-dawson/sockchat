@@ -1,0 +1,89 @@
+<!doctype html>
+<html>
+	<head>
+		<title>Socket.IO chat</title>
+		<link rel="stylesheet" type="text/css" href="http://web.cs.dal.ca/~idawson/sockchat/style.css">
+		<!--<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>-->
+		<script src="http://web.cs.dal.ca/~idawson/sockchat/node_modules/socket.io-client/socket.io.js"></script>
+		<script>
+			var socket = io();
+			function bodyOnLoad() {
+				document.getElementById("nick-taken").style.display = "none";
+				document.getElementById("chat-screen").style.display = "none";		
+			}
+			function login() {
+				var name = document.getElementById("nick").value;
+				socket.emit('new nick', name, function(response) {
+					if (response) {
+						document.getElementById("login-screen").style.display = "none";
+                                		document.getElementById("chat-screen").style.display = "block";
+						console.log("#");
+						socket.emit('join');
+					} else {
+						document.getElementById("nick-taken").style.display = "block";
+					}
+				});
+				return false;
+			}
+			function send() {
+				var m = document.getElementById("m").value;
+				socket.emit('chat message', m);
+				document.getElementById("m").value = "";
+				return false;
+			};
+			function pad_zero(n) {
+				if (n < 10) {
+					return "0" + n;
+				}  else {
+					return n.toString();
+				}
+			};
+			function timestamp() {
+				d = new Date();
+				return "[" + pad_zero(d.getHours()) + ":" + 
+				pad_zero(d.getMinutes()) + ":" + 
+				pad_zero(d.getSeconds()) + "]";
+			};
+			socket.on('chat message', function(response) {
+				var message = timestamp() + " <" + response.name + "> " +  response.msg;
+				var node = document.createElement("li");
+		                var textnode = document.createTextNode(message)
+        		        node.appendChild(textnode);
+	                	document.getElementById("messages").appendChild(node);
+			});
+			socket.on('join', function(response) {
+				var message = timestamp() + " "  + response + " has joined. ";
+                                var node = document.createElement("li");
+                                var textnode = document.createTextNode(message)
+                                node.appendChild(textnode);
+                                document.getElementById("messages").appendChild(node);
+			});
+			socket.on('disconnect', function(response) {
+                                var message = timestamp() + " "  + response + " has left. ";
+                                var node = document.createElement("li");
+                                var textnode = document.createTextNode(message)
+                                node.appendChild(textnode);
+                                document.getElementById("messages").appendChild(node);
+                        });
+
+		</script>
+	</head>
+	<body onload="bodyOnLoad()">
+		<div id ="login-screen">
+			<form id="form" onsubmit="return login()">
+				<input id="nick" autocomplete="off"/>
+				<input type="submit" name="Submit" value="Use Nickname"/>
+			</form>
+			<div id="nick-taken">This nickname is taken.</div>
+		</div>
+		<div id ="chat-screen">
+                        <ul id="messages"></ul>
+                        <form id="form" onsubmit="return send()">
+                                <input id="m" autocomplete="off"/>
+                                <input type="submit" name="Send" value="Send"/>
+                       	</form>
+                </div>
+
+	</body>
+</html>
+
